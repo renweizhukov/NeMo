@@ -273,6 +273,7 @@ def nemo_llm_model_to_model_config(
         torch_dtype = next(iter(nemo_model.state_dict().values())).dtype
 
     str_dtype = trt_dtype_to_str(np_dtype_to_trt(torch_dtype_to_np(torch_dtype)))
+    num_attention_heads = nemo_model_config.get('num_attention_heads')
     model_config = PretrainedConfig(
         architecture='LlamaForCausalLM',
         dtype=str_dtype,
@@ -281,8 +282,10 @@ def nemo_llm_model_to_model_config(
         max_position_embeddings=nemo_model_config.get('max_position_embeddings'),
         hidden_size=nemo_model_config.get('hidden_size'),
         num_hidden_layers=nemo_model_config.get('num_layers'),
-        num_attention_heads=nemo_model_config.get('num_attention_heads'),
-        num_key_value_heads=nemo_model_config.get('num_query_groups'),
+        num_attention_heads=num_attention_heads,
+        # If `num_query_groups` is not present in the model config, we use `num_attention_heads`
+        # to set `num_key_value_heads`.
+        num_key_value_heads=nemo_model_config.get('num_query_groups', num_attention_heads),
         hidden_act='silu',
         intermediate_size=nemo_model_config.get('ffn_hidden_size'),
         norm_epsilon=nemo_model_config.get('layernorm_epsilon'),
