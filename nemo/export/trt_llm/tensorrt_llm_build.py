@@ -391,7 +391,9 @@ def build_and_save_engine(
         'max_prompt_embedding_table_size': 0,
         'gather_context_logits': False,
         'gather_generation_logits': False,
-        'strongly_typed': False,
+        # Set `strongly_typed` as `True` to resolve the warning given in
+        # https://github.com/NVIDIA/TensorRT-LLM/issues/1273#issuecomment-2019268569
+        'strongly_typed': True,
         'builder_opt': None,
         'use_refit': use_refit,
     }
