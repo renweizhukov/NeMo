@@ -404,6 +404,17 @@ def build_and_save_engine(
         share_embedding_table=model_config.share_embedding_table,
     )
     preprocess_weights(model_weights, model_config)
+
+    # Some old model like GPT 2B may have old weight and bias names as "pre_mlp_layernorm". Rename "pre_mlp_layernorm" as
+    # "post_layernorm" since TensorRT-LLM expects "post_layernorm".
+    for layer_index in range(model_config.num_hidden_layers):
+        pre_mlp_layer_weight_name = f"transformer.layers.{layer_index}.pre_mlp_layernorm.weight"
+        if pre_mlp_layer_weight_name in model_weights:
+            model_weights[f"transformer.layers.{layer_index}.post_layernorm.weight"] = model_weights.pop(pre_mlp_layer_weight_name)
+        pre_mlp_layer_bias_name = f"transformer.layers.{layer_index}.pre_mlp_layernorm.bias"
+        if pre_mlp_layer_bias_name in model_weights:
+            model_weights[f"transformer.layers.{layer_index}.post_layernorm.bias"] = model_weights.pop(pre_mlp_layer_bias_name)
+
     model.load(model_weights)
     engine = build_trtllm(model, build_config) 
     engine.save(model_dir)        
